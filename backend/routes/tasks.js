@@ -1,55 +1,67 @@
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
+const auth = require('../middleware/auth'); // 👈 เรียกยาม (Middleware) มาใช้งาน
 
-// GET /api/tasks — fetch all tasks
-router.get('/', async (req, res) => {
+// 1. ดึงข้อมูลงานทั้งหมด (เฉพาะของตัวเอง)
+// สังเกตว่าเราแทรก auth เข้าไปตรงกลาง เพื่อให้ยามตรวจบัตรก่อน
+router.get('/', auth, async (req, res) => {
   try {
-    const tasks = await Task.find().sort({ createdAt: -1 });
+    // หาเฉพาะงานที่ owner ตรงกับ id ของคนที่ล็อกอินเข้ามา
+    const tasks = await Task.find({ owner: req.user.id }).sort({ createdAt: -1 });
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// POST /api/tasks — create a new task
-router.post('/', async (req, res) => {
+// 2. สร้างงานใหม่
+router.post('/', auth, async (req, res) => {
+  // รับข้อมูลจากหน้าบ้าน แล้วเติม owner เข้าไปโดยดึงจากบัตรผ่าน (Token)
+  const task = new Task({
+    ...req.body,
+    owner: req.user.id
+  });
+
   try {
-    const task = new Task({
-      title: req.body.title,
-      group: req.body.group || '',
-      priority: req.body.priority || 'medium',
-      due: req.body.due || '',
-      done: req.body.done || false,
-      created: req.body.created || new Date().toISOString().split('T')[0],
-    });
-    const saved = await task.save();
-    res.status(201).json(saved);
+    const newTask = await task.save();
+    res.status(201).json(newTask);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// PUT /api/tasks/:id — update a task
-router.put('/:id', async (req, res) => {
+// 3. แก้ไขงาน
+router.put('/:id', auth, async (req, res) => {
   try {
-    const updated = await Task.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updated) return res.status(404).json({ message: 'Task not found' });
-    res.json(updated);
+    // หาและอัปเดตงาน โดยต้องเป็นงานที่มี id ตรงกัน และ "ต้องเป็นของตัวเองด้วย"
+    const updatedTask = await Task.findOneAndUpdate(
+      { _id: req.params.id, owner: req.user.id },
+      req.body,
+      { new: true }
+    );
+
+    if (!updatedTask) {
+      return res.status(404).json({ message: 'ไม่พบงานนี้ หรือคุณไม่มีสิทธิ์แก้ไข' });
+    }
+
+    res.json(updatedTask);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// DELETE /api/tasks/:id — delete a task
-router.delete('/:id', async (req, res) => {
+// 4. ลบงาน
+router.delete('/:id', auth, async (req, res) => {
   try {
-    const deleted = await Task.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Task not found' });
-    res.json({ message: 'Task deleted' });
+    // หาและลบงาน โดยต้องเป็นงานที่มี id ตรงกัน และ "ต้องเป็นของตัวเองด้วย"
+    const task = await Task.findOneAndDelete({ _id: req.params.id, owner: req.user.id });
+
+    if (!task) {
+      return res.status(404).json({ message: 'ไม่พบงานนี้ หรือคุณไม่มีสิทธิ์ลบ' });
+    }
+
+    res.json({ message: 'ลบงานเรียบร้อยแล้ว' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

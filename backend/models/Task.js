@@ -28,6 +28,17 @@ const taskSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    // 👇 ฟีเจอร์แท็กคนรับผิดชอบ (ที่เราเพิ่งทำเสร็จไป)
+    assignees: {
+      type: [String],
+      default: []
+    },
+    // 👇 ฟีเจอร์ระบบสมาชิก: ผูกงานนี้เข้ากับเจ้าของ (User ID)
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    }
   },
   { timestamps: true }
 );

@@ -14,6 +14,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/tasks', taskRoutes);
+app.use('/api/auth', require('./routes/auth'));
 
 // Health check
 app.get('/', (req, res) => {
