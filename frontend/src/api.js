@@ -8,7 +8,7 @@ const api = axios.create({
   baseURL: BASE,
 });
 
-// 👇 จุดที่เพิ่มเข้ามา: ทุกครั้งที่ยิง API ให้ไปเช็คว่ามี Token ไหม ถ้ามีให้แปะไปด้วย
+// ทุกครั้งที่ยิง API ให้เช็คและแปะ Token ไปด้วย
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -19,7 +19,11 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-// Export ฟังก์ชันต่างๆ ให้หน้าบ้านเรียกใช้ได้ง่ายขึ้น
+// --- 👇 เพิ่มส่วนนี้สำหรับระบบ Auth (ต้องมี /api นำหน้า) ---
+export const registerUser = (data) => api.post('/api/auth/register', data);
+export const loginUser = (data) => api.post('/api/auth/login', data);
+
+// --- ส่วนจัดการ Tasks (มี /api อยู่แล้ว) ---
 export const getTasks = () => api.get('/api/tasks');
 export const createTask = (data) => api.post('/api/tasks', data);
 export const updateTask = (id, data) => api.put(`/api/tasks/${id}`, data);

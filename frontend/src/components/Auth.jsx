@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import api from '../api';
+import { registerUser, loginUser } from '../api';
 
 export default function Auth({ onLogin }) {
     const [isLogin, setIsLogin] = useState(true);
@@ -11,14 +12,13 @@ export default function Auth({ onLogin }) {
         e.preventDefault();
         setError('');
         try {
-            // เลือกว่าจะยิง API ไปที่เข้าสู่ระบบ หรือ สมัครสมาชิก
-            const endpoint = isLogin ? '/auth/login' : '/auth/register';
-            const res = await api.post(endpoint, { username, password });
+            // ใช้ฟังก์ชันที่ Import มาแทนการเขียน api.post เอง
+            const res = isLogin
+                ? await loginUser({ username, password })
+                : await registerUser({ username, password });
 
-            // ถ้าสำเร็จ ส่ง Token และ Username กลับไปให้ App.jsx เก็บไว้
             onLogin(res.data.token, res.data.username);
         } catch (err) {
-            // ถ้าพิมพ์ผิด หรือชื่อซ้ำ ให้โชว์ Error สีแดง
             setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
         }
     };
