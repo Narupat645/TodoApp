@@ -46,7 +46,7 @@ export default function TaskList({
             const dateClass = overdue ? 'overdue' : soon ? 'soon' : '';
             const prioText =
               { high: 'เร่งด่วน', medium: 'ปานกลาง', low: 'ปกติ' }[
-                t.priority
+              t.priority
               ] || '';
             const prioClass = 'priority-' + (t.priority || 'low');
             const taskId = t._id || t.id;
@@ -75,6 +75,11 @@ export default function TaskList({
                         }}
                       >
                         {t.group}
+                      </span>
+                    )}
+                    {t.assignees && t.assignees.length > 0 && (
+                      <span className="tag" style={{ background: 'rgba(91,141,238,0.15)', color: 'var(--accent)' }}>
+                        👤 {t.assignees.join(', ')}
                       </span>
                     )}
                     {t.due && (
