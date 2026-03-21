@@ -8,6 +8,7 @@ export default function TaskModal({ open, editTask, groups, onSave, onClose }) {
   const [newGroup, setNewGroup] = useState('');
   const titleRef = useRef(null);
   const [titleError, setTitleError] = useState(false);
+  const [assignees, setAssignees] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -16,6 +17,7 @@ export default function TaskModal({ open, editTask, groups, onSave, onClose }) {
         setGroup(editTask.group || '');
         setPriority(editTask.priority || 'medium');
         setDue(editTask.due || '');
+        setAssignees(editTask.assignees ? editTask.assignees.join(', ') : '');
       } else {
         setTitle('');
         setGroup('');
@@ -48,12 +50,18 @@ export default function TaskModal({ open, editTask, groups, onSave, onClose }) {
     const trimNewGroup = newGroup.trim();
     if (trimNewGroup) finalGroup = trimNewGroup;
 
+    const assigneesArray = assignees
+      .split(',')
+      .map(a => a.trim())
+      .filter(a => a !== '');
+
     onSave({
       title: trimmed,
       group: finalGroup,
       priority,
       due,
       newGroup: trimNewGroup,
+      assignees: assigneesArray,
     });
   };
 
@@ -79,6 +87,15 @@ export default function TaskModal({ open, editTask, groups, onSave, onClose }) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             style={titleError ? { borderColor: 'var(--red)' } : {}}
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label">ผู้รับผิดชอบ (คั่นหลายคนด้วยลูกน้ำ ,)</label>
+          <input
+            className="form-input"
+            placeholder="เช่น สมชาย, นัททิว..."
+            value={assignees}
+            onChange={(e) => setAssignees(e.target.value)}
           />
         </div>
         <div className="form-row">
