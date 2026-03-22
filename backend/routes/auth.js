@@ -61,4 +61,15 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// ดึงรายชื่อผู้ใช้งานทั้งหมด (เอาไว้ทำ Tag @)
+router.get('/users', async (req, res) => {
+    try {
+        // ต้องมั่นใจว่าในไฟล์นี้มีดึงโมเดล User มาแล้ว เช่น const User = require('../models/User');
+        const users = await User.find({}, 'username');
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;
