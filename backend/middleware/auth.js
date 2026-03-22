@@ -1,5 +1,16 @@
 const jwt = require('jsonwebtoken');
 
+// ดึงรายชื่อผู้ใช้งานทั้งหมดในระบบ (เอาแค่ username มาโชว์)
+router.get('/users', async (req, res) => {
+    try {
+        // ดึงมาเฉพาะ username และ _id (ไม่เอา password มาเด็ดขาด!)
+        const users = await User.find({}, 'username');
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = function (req, res, next) {
     // 1. รับบัตรผ่าน (Token) จาก Header ที่หน้าบ้านส่งมา
     const token = req.header('Authorization');
