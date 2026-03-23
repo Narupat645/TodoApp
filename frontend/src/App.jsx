@@ -4,7 +4,7 @@ import Topbar from './components/Topbar';
 import DashboardStats from './components/DashboardStats';
 import TaskList from './components/TaskList';
 import TaskModal from './components/TaskModal';
-import Auth from './components/Auth'; // 👈 เพิ่มหน้า Auth
+import Auth from './components/Auth';
 import { getTasks, createTask, updateTask, deleteTask as deleteTaskApi } from './api';
 import { today, isOverdue, isDueToday } from './utils';
 import './index.css';
@@ -12,11 +12,11 @@ import './index.css';
 const DEFAULT_GROUPS = ['ส่วนตัว', 'งาน', 'การศึกษา'];
 
 export default function App() {
-  // --- 1. State สำหรับระบบสมาชิก ---
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [username, setUsername] = useState(localStorage.getItem('username'));
+  // --- 1. ปรับ State ให้มีค่า Default (Bypass) ---
+  // ให้ค่าเริ่มต้นเป็น 'guest' แทน null เพื่อให้ข้ามหน้า Auth ทันที
+  const [token, setToken] = useState(localStorage.getItem('token') || 'guest_token');
+  const [username, setUsername] = useState(localStorage.getItem('username') || 'Guest Mode');
 
-  // --- 2. State สำหรับงาน (จากโค้ดเดิมของคุณ) ---
   const [tasks, setTasks] = useState([]);
   const [currentView, setCurrentView] = useState('all');
   const [currentPriority, setCurrentPriority] = useState('');
@@ -24,29 +24,27 @@ export default function App() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
 
-  // Derive groups
   const groups = useMemo(() => {
     const fromTasks = tasks.map((t) => t.group).filter(Boolean);
     return [...new Set([...DEFAULT_GROUPS, ...fromTasks])];
   }, [tasks]);
 
-  // Fetch tasks (ปรับให้ใช้ useCallback และดัก Error 401)
+  // Fetch tasks (ถอดเงื่อนไข if (!token) ออกเพื่อให้ยิง API ได้เลย)
   const fetchTasks = useCallback(async () => {
-    if (!token) return;
     try {
       const res = await getTasks();
       setTasks(res.data);
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
-      if (err.response?.status === 401) handleLogout(); // ถ้าตั๋วหมดอายุ ให้เตะออก
+      // คอมเมนต์ handleLogout() ออก เพื่อไม่ให้มันเด้งกลับหน้า Login เมื่อ Token ผิด
+      // if (err.response?.status === 401) handleLogout(); 
     }
-  }, [token]);
+  }, []); // ลบ dependency [token] ออก
 
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
 
-  // --- 3. ฟังก์ชันระบบสมาชิก ---
   const handleLogin = (newToken, newUsername) => {
     localStorage.setItem('token', newToken);
     localStorage.setItem('username', newUsername);
@@ -62,9 +60,8 @@ export default function App() {
     setTasks([]);
   };
 
-  // --- 4. Keyboard Shortcuts (Ctrl+N) ---
   useEffect(() => {
-    if (!token) return;
+    // ปรับให้ Keyboard shortcut ทำงานได้เสมอแม้ไม่มี token จริง
     const handleKey = (e) => {
       if (e.key === 'n' && e.ctrlKey) {
         e.preventDefault();
@@ -74,9 +71,8 @@ export default function App() {
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [token]);
+  }, []);
 
-  // --- 5. Logic การ Filter งาน (จากโค้ดเดิมของคุณ) ---
   const filteredTasks = useMemo(() => {
     let list = [...tasks];
     const q = searchQuery.toLowerCase();
@@ -100,7 +96,6 @@ export default function App() {
     return list;
   }, [tasks, searchQuery, currentPriority, currentView]);
 
-  // --- 6. Handlers จัดการงาน ---
   const handleSaveTask = async (data) => {
     try {
       if (editId) {
@@ -127,10 +122,13 @@ export default function App() {
     }
   };
 
-  // --- 7. การแสดงผล (Render) ---
+  // --- 7. แก้เงื่อนไข Render (สำคัญ!) ---
+  // คอมเมนต์ส่วนนี้ทิ้ง เพื่อไม่ให้มันบล็อกหน้า Dashboard
+  /*
   if (!token) {
     return <Auth onLogin={handleLogin} />;
   }
+  */
 
   return (
     <>
@@ -139,7 +137,7 @@ export default function App() {
         groups={groups}
         currentView={currentView}
         setView={setCurrentView}
-        onLogout={handleLogout} // 👈 ส่งปุ่ม Logout ไปที่ Sidebar
+        onLogout={handleLogout}
       />
       <div className="main">
         <Topbar
@@ -148,7 +146,7 @@ export default function App() {
           currentPriority={currentPriority}
           setPriority={setCurrentPriority}
           openModal={() => { setEditId(null); setModalOpen(true); }}
-          username={username} // 👈 ส่งชื่อผู้ใช้ไปโชว์ที่ Topbar
+          username={username}
           onLogout={handleLogout}
         />
         <div className="content">
