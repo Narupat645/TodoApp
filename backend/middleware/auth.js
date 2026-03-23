@@ -1,14 +1,14 @@
 const jwt = require('jsonwebtoken');
 
 module.exports = function (req, res, next) {
-    // --- ปิดระบบเช็ค Token ชั่วคราว ---
+    // --- 🛠️ แก้ไขเรียบร้อย: สวมรอยเป็น User 'Test123' อัตโนมัติ ---
 
-    // ใส่ ID ของ User ทดสอบที่คุณสร้างไว้ใน MongoDB Atlas แทนที่ 'YOUR_USER_ID_HERE'
-    req.user = { id: 'YOUR_USER_ID_HERE' };
+    // ใช้ ID จากรูปที่คุณหาเจอ: 69bf456b48c6d0b7246e08c7
+    req.user = { id: '69bf456b48c6d0b7246e08c7' };
 
-    return next(); // สั่งให้ "ผ่านประตู" ไปได้เลยทันที ไม่ต้องดู Token ด้านล่าง
+    return next(); // สั่งให้ผ่านประตูไปดึงข้อมูลและบันทึกงานได้เลย
 
-    /* --- โค้ดเดิม (ถูกปิดไว้) ---
+    /* --- โค้ดเดิมที่ถูกปิดไว้ ---
     const token = req.header('Authorization');
     if (!token) {
         return res.status(401).json({ message: 'ไม่มี Token' });
